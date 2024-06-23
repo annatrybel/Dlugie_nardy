@@ -18,6 +18,9 @@ class Game:
         self.offset_y = 0
         self.dice_result = 0
         self.current_color = "black" 
+        self.pionek_usuniety = False  # Flaga do śledzenia, czy pionek został usunięty podczas bieżącego rzutu
+        self.double_dice = False
+        self.double_roll = None
 
         
 
@@ -32,7 +35,9 @@ class Game:
         self.board = Board(self.window)
         self.ustawianie_pierwszenstwa = True
         self.current_color = "black" 
-
+        self.pionek_usuniety = False
+        self.double_dice = False
+        self.double_roll = None
        
 
     def draw_buttons(self):
@@ -87,6 +92,12 @@ class Game:
                         self.display_dice_results(random_dice1, random_dice2)
                         self.dice_result = random_dice1 + random_dice2
                         
+                        self.pionek_usuniety = False  # Resetowanie flagi przy nowym rzucie, 1 usunięty pionek na rzut
+
+                        if self.double_dice == False and random_dice1 == random_dice2:     # Sprawdzenie czy wyrzucono dublet za pierwszym rzutem
+                            self.double_roll = random_dice1 
+                        self.double_dice = True
+
                         self.current_color = "white" if self.current_color == "black" else "black"         # Zmiana aktualnego koloru
                     
                     elif self.powrot_button.is_clicked():
@@ -96,30 +107,33 @@ class Game:
                         main()
                         return
 
-                    if not self.ustawianie_pierwszenstwa and self.dice_result != 0:
+                    if not self.ustawianie_pierwszenstwa and self.dice_result != 0:                                   
                         mouse_x, mouse_y = event.pos
-
-                        # Sprawdź pionki białe lub czarne w zależności od aktualnego koloru
                         if self.current_color == "white":
-                            if self.board.pionki1:
+                            if self.board.pionki1 and not self.pionek_usuniety:
                                 self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
+                                if self.double_roll is not None:                                                             # Usuwanie 2 pionków w przypadku dubletu
+                                    self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
+                                self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone1
                         else:
-                            self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
+                            if self.board.pionki2 and not self.pionek_usuniety:
+                                self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
+                                if self.double_roll is not None:
+                                    self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
+                                self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone2
-                                                                                
-                        for pionek in pionki_wyprowadzone:  # Łączymy listy stosu i wyprowadzonych pionków
+
+                        for pionek in pionki_wyprowadzone:
                             if pionek.rect.collidepoint(mouse_x, mouse_y):
                                 self.dragging = True
                                 self.selected_pionek = pionek
                                 self.offset_x = pionek.rect.x - mouse_x
                                 self.offset_y = pionek.rect.y - mouse_y
                                 break
-                        
+
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.dragging and self.selected_pionek:
-                        # Dodaj pionek do listy wyprowadzonych i usuń go ze stosu
-                        
                         self.dragging = False
                         self.selected_pionek = None
                 elif event.type == pygame.MOUSEMOTION:
