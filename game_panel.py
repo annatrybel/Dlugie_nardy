@@ -14,16 +14,17 @@ class Game:
         self.ustawianie_pierwszenstwa = True
         self.dragging = False
         self.selected_pionek = None
-        self.offset_x = 0
+        self.offset_x = 
         self.offset_y = 0
         self.dice_result = 0
         self.current_color = "black" 
         self.pionek_usuniety = False  # Flaga do śledzenia, czy pionek został usunięty podczas bieżącego rzutu
-        self.double_dice = False
-        self.double_roll = None
-
+        self.double_dice_white = False
+        self.double_dice_black = False
+        self.double_roll_white = None
+        self.double_roll_black = None
         
-
+    
         self.ustawianie_button = Button(50, 800, 400, 100, "images/ustawienie.png", "images/ustawienie2.png")
         self.rzut_button = Button(50, 800, 400, 100, "images/rzut.png", "images/rzut2.png")
         self.powrot_button = Button(700, 800, 400, 100, "images/powrot.png", "images/powrot2.png")
@@ -36,8 +37,10 @@ class Game:
         self.ustawianie_pierwszenstwa = True
         self.current_color = "black" 
         self.pionek_usuniety = False
-        self.double_dice = False
-        self.double_roll = None
+        self.double_dice_white = False
+        self.double_dice_black = False
+        self.double_roll_white = None
+        self.double_roll_black = None
        
 
     def draw_buttons(self):
@@ -94,9 +97,13 @@ class Game:
                         
                         self.pionek_usuniety = False  # Resetowanie flagi przy nowym rzucie, 1 usunięty pionek na rzut
 
-                        if self.double_dice == False and random_dice1 == random_dice2:     # Sprawdzenie czy wyrzucono dublet za pierwszym rzutem
+                        if self.current_color == "white" and self.double_dice_white == False and random_dice1 == random_dice2:     # Sprawdzenie czy wyrzucono dublet za pierwszym rzutem
                             self.double_roll = random_dice1 
-                        self.double_dice = True
+                        self.double_dice_white = True
+
+                        if self.current_color == "black" and self.double_dice_black == False and random_dice1 == random_dice2:
+                            self.double_roll = random_dice1
+                        self.double_dice_black = True
 
                         self.current_color = "white" if self.current_color == "black" else "black"         # Zmiana aktualnego koloru
                     
@@ -112,14 +119,14 @@ class Game:
                         if self.current_color == "white":
                             if self.board.pionki1 and not self.pionek_usuniety:
                                 self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
-                                if self.double_roll is not None:                                                             # Usuwanie 2 pionków w przypadku dubletu
+                                if self.double_roll_white is not None:                                                             # Usuwanie 2 pionków w przypadku dubletu
                                     self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
                                 self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone1
                         else:
                             if self.board.pionki2 and not self.pionek_usuniety:
                                 self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
-                                if self.double_roll is not None:
+                                if self.double_roll_black is not None:
                                     self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
                                 self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone2
@@ -130,11 +137,29 @@ class Game:
                                 self.selected_pionek = pionek
                                 self.offset_x = pionek.rect.x - mouse_x
                                 self.offset_y = pionek.rect.y - mouse_y
+                                self.selected_pionek.update_previous_position()
                                 break
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.dragging and self.selected_pionek:
                         self.dragging = False
+                         # Sprawdzenie kolizji z każdym prostokątem w listach
+                        valid_position = False
+                        
+
+                        for rect in self.board.top_left + self.board.top_right + self.board.down_left + self.board.down_right:
+                            if self.selected_pionek.rect.colliderect(rect):
+                                if self.is_move_clockwise(self.selected_pionek.previous_position, (rect.x, rect.y)):
+                                    if not self.board.is_opponent_checker_on_position(self.current_color,rect.x, rect.y):
+                                        self.selected_pionek.rect.centerx = rect.centerx
+                                        self.selected_pionek.rect.centery = rect.centery
+                                        valid_position = True
+                                        break
+
+                         # Jeśli pozycja nie jest poprawna, wróć do oryginalnej pozycji
+                        if not valid_position:
+                            self.selected_pionek.rect.x, self.selected_pionek.rect.y = self.selected_pionek.previous_position
+
                         self.selected_pionek = None
                 elif event.type == pygame.MOUSEMOTION:
                     if self.dragging and self.selected_pionek:
@@ -147,16 +172,49 @@ class Game:
             self.draw_buttons()
             pygame.display.update()
 
+    def is_move_clockwise(self, original_pos, new_pos):
+        ox, oy = original_pos
+        nx, ny = new_pos
+        
+        # Logika sprawdzania, czy ruch jest zgodny z ruchem wskazówek zegara
+      
+        top_left_quadrant = (ox < 650 and oy < 160)
+        top_right_quadrant = (ox >= 650 and oy < 600)
+        down_left_quadrant = (ox < 650 and oy >= 160)
+        down_right_quadrant = (ox >= 650 and oy >= 500)
+                     
+
+        if down_left_quadrant:
+            if nx >= 650 and ny >= 500:
+                return True
+            if nx < 650 and ny >= 200:
+                return True
+
+        if down_right_quadrant:
+            if nx >= 650 and ny < 200:
+                return True
+            if nx >= 650 and ny >= 500:
+                return True
+
+        if top_right_quadrant:
+            if nx < 650 and ny < 200:
+                return True
+            if nx >= 650 and ny < 200:
+                return True
+
+        if top_left_quadrant:
+            if nx < 650 and ny >= 400:
+                return True
+            if nx < 650 and ny < 200:
+                return True
+           
+
+        return False
+
 if __name__ == "__main__":
     game = Game()
     game.start()
 
     
-
-
-
-
-
-
 
 
