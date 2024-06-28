@@ -11,7 +11,7 @@ class Checker:
         self.color = color
         self.image = self.pionek1_img if color == 'white' else self.pionek2_img
         self.rect = pygame.Rect(x, y, 75, 75)
-        self.previous_position = None
+        self.previous_position = (x, y)
 
     def update_previous_position(self):
         self.previous_position = (self.rect.x, self.rect.y)
@@ -28,8 +28,8 @@ class Board:
     def __init__(self, window, offset=60):
         self.window = window
         self.offset = offset
-        self.pionki1 = [Checker('white', 1055, offset + i * 37) for i in range(15)]
-        self.pionki2 = [Checker('black', offset, 680 - i * 37) for i in range(15)]
+        self.pionki1 = [Checker('white', 1055, offset + i * 36) for i in range(15)]
+        self.pionki2 = [Checker('black', offset, 680 - i * 36) for i in range(15)]
         self.pionki_wyprowadzone1 = []
         self.pionki_wyprowadzone2 = []
         # Listy do przechowywania prostokątów
