@@ -17,13 +17,15 @@ class Game:
         self.selected_pionek = None
         self.offset_x = 0
         self.offset_y = 0
-        self.dice_result = 0
         self.current_color = "black" 
+        self.dice_result = 0
         self.pionek_usuniety = False  # Flaga do śledzenia, czy pionek został usunięty podczas bieżącego rzutu
-        self.double_dice_white = False
-        self.double_dice_black = False
+        self.first_double_dice1_white = False
+        self.first_double_dice1_black = False
         self.double_roll_white = None
         self.double_roll_black = None
+        self.double_dice = 0
+      
 
         self.dice1_used = False  
         self.dice2_used = False  
@@ -46,15 +48,20 @@ class Game:
         self.ustawianie_pierwszenstwa = True
         self.current_color = "black" 
         self.pionek_usuniety = False
-        self.double_dice_white = False
-        self.double_dice_black = False
+        self.first_double_dice1_white = False
+        self.first_double_dice1_black = False
         self.double_roll_white = None
         self.double_roll_black = None
+        self.dice_result = 0
         self.dice1_used = False
         self.dice2_used = False
+        self.random_dice1 = None
+        self.random_dice2 = None
+        self.expected_move = None
+        self.double_dice = 0
         
-       
-
+        
+    
     def draw_buttons(self):
         if self.ustawianie_pierwszenstwa:
             self.ustawianie_button.draw(self.window)
@@ -78,16 +85,16 @@ class Game:
     def first_projection(self):
         # Sprawdzanie, czy to pierwszy rzut dla danego gracza
         if self.current_color == "white":
-            if not self.double_dice_white:  # Sprawdzenie, czy to pierwszy rzut białego gracza
+            if not self.first_double_dice1_white:  # Sprawdzenie, czy to pierwszy rzut białego gracza
                 if self.random_dice1 == self.random_dice2:  # Sprawdzenie, czy wyrzucono dublet
                     self.double_roll_white = self.random_dice1
-            self.double_dice_white = True  # Ustawienie flagi po pierwszym rzucie białego gracza
+            self.first_double_dice1_white = True  # Ustawienie flagi po pierwszym rzucie białego gracza
 
         elif self.current_color == "black":
-            if not self.double_dice_black:  # Sprawdzenie, czy to pierwszy rzut czarnego gracza
+            if not self.first_double_dice1_black:  # Sprawdzenie, czy to pierwszy rzut czarnego gracza
                 if self.random_dice1 == self.random_dice2:  # Sprawdzenie, czy wyrzucono dublet
                     self.double_roll_black = self.random_dice1
-            self.double_dice_black = True  # Ustawienie flagi po pierwszym rzucie czarnego gracza
+            self.first_double_dice1_black = True  # Ustawienie flagi po pierwszym rzucie czarnego gracza
 
     def obsługa_przycisków(self):
         if self.ustawianie_button.is_clicked() and self.ustawianie_pierwszenstwa:
@@ -108,12 +115,16 @@ class Game:
             pygame.time.delay(2000)
             self.ustawianie_pierwszenstwa = False
         elif self.rzut_button.is_clicked() and not self.ustawianie_pierwszenstwa:
+            self.double_dice = 0                # dublety kostek
+            
             self.random_dice1, self.random_dice2 = self.catch_dice()
             self.display_dice_results(self.random_dice1, self.random_dice2)
             self.dice_result = self.random_dice1 + self.random_dice2
-
-            self.dice1_used = False  # Resetowanie zmiennej
-            self.dice2_used = False  # Resetowanie zmiennej
+            if self.random_dice1 == self.random_dice2:
+                self.double_dice = 2
+                           
+            self.dice1_used = False  # Resetowanie zmiennej, odpowiedzialnej za wykorzystanie pierwszego rzutu
+            self.dice2_used = False  # Resetowanie zmiennej, odpowiedzialnej za wykorzystanie drugiego rzutu
             
             self.pionek_usuniety = False  # Resetowanie flagi przy nowym rzucie, 1 usunięty pionek na rzut
                                         
@@ -145,28 +156,31 @@ class Game:
                         mouse_x, mouse_y = event.pos
                         if self.current_color == "white":
                             if self.board.pionki1 and not self.pionek_usuniety:
-                                self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
-                                if self.double_roll_white is not None:
+                                 if self.board.pionki1[-1].rect.collidepoint(mouse_x, mouse_y):
                                     self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
-                                self.pionek_usuniety = True
+                                    if self.double_roll_white is not None:
+                                        self.board.remove_from_stack(self.current_color, self.board.pionki1[-1])
+                                    self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone1
                         else:
                             if self.board.pionki2 and not self.pionek_usuniety:
-                                self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
-                                if self.double_roll_black is not None:
+                                if self.board.pionki2[-1].rect.collidepoint(mouse_x, mouse_y):
                                     self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
-                                self.pionek_usuniety = True
+                                    if self.double_roll_black is not None:
+                                        self.board.remove_from_stack(self.current_color, self.board.pionki2[-1])
+                                    self.pionek_usuniety = True
                             pionki_wyprowadzone = self.board.pionki_wyprowadzone2
 
                         for pionek in pionki_wyprowadzone:
-                            if pionek.rect.collidepoint(mouse_x, mouse_y):
-                                self.dragging = True
-                                self.selected_pionek = pionek
-                                self.offset_x = pionek.rect.x - mouse_x
-                                self.offset_y = pionek.rect.y - mouse_y
-                                self.selected_pionek.update_previous_position()
-                                break
-                        
+                            if pionek.rect.collidepoint(mouse_x, mouse_y): 
+                                if pionek == self.board.end_on_position(mouse_x, mouse_y, pionki_wyprowadzone):                             
+                                    self.dragging = True
+                                    self.selected_pionek = pionek
+                                    self.offset_x = pionek.rect.x - mouse_x
+                                    self.offset_y = pionek.rect.y - mouse_y
+                                    self.selected_pionek.update_previous_position()
+                                    break
+                            
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.dragging and self.selected_pionek:
@@ -176,22 +190,23 @@ class Game:
                         for rect in self.board.top_left + self.board.top_right + self.board.down_left + self.board.down_right:
                             if self.selected_pionek.rect.colliderect(rect):
                                 if not self.dice1_used:
-                                    print("not self.dice1_used:")
                                     if self.is_move_clockwise(self.selected_pionek.previous_position, (rect.x, rect.y), self.random_dice1):
                                         if not self.board.is_opponent_checker_on_position(self.current_color, rect.x, rect.y):
                                             self.selected_pionek.rect.centerx = rect.centerx
                                             self.selected_pionek.rect.centery = rect.centery
                                             self.dice1_used = True
+                                            if self.double_dice > 0:
+                                                self.dice1_used = False
+                                                self.double_dice -= 1
                                             valid_position = True
                                             break  # Przerwij pętlę po znalezieniu pierwszego prawidłowego ruchu
                                 elif not self.dice2_used:
-                                    print("not self.dice2_used:")
                                     if self.is_move_clockwise(self.selected_pionek.previous_position, (rect.x, rect.y), self.random_dice2):
                                         if not self.board.is_opponent_checker_on_position(self.current_color, rect.x, rect.y):
                                             self.selected_pionek.rect.centerx = rect.centerx
                                             self.selected_pionek.rect.centery = rect.centery
-                                            self.dice2_used = True
-                                            valid_position = True
+                                            self.dice2_used = True                                            
+                                            valid_position = True                                    
                                             break  # Przerwij pętlę po znalezieniu pierwszego prawidłowego ruchu
 
                         if not valid_position:
@@ -253,16 +268,21 @@ class Game:
                 if self.expected_move == dice_result:
                     return True
             elif (new_x < 650 and new_y >= 160):
-                self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
-                print(self.expected_move)
-                if self.expected_move == dice_result:
-                    return True
+                if new_x > current_x:
+                    self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
+                    print(self.expected_move)
+                    if self.expected_move == dice_result:
+                        return True
             else:
                 return False
         
 
         if down_right_quadrant:
             if (new_x >= 650 and new_y < 200):
+
+                if self.current_color == "white":     # Ograniczenie przejście po drugiemu kołu dla białych pionków
+                    return False
+                
                 if(target_down_right.centerx -  target_rect_original.centerx)//80 != 0:
                     num_end = abs(target_down_right.centerx -  target_rect_original.centerx)//80     # Obliczanie liczby pól, o które przesunięto pionek w swoim kwadracie
                 else:
@@ -275,10 +295,11 @@ class Game:
                 else:
                     return False                  
             elif (new_x >= 650 and new_y >= 500):
-                self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
-                print(self.expected_move)
-                if self.expected_move == dice_result:
-                    return True
+                if new_x > current_x:
+                    self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
+                    print(self.expected_move)
+                    if self.expected_move == dice_result:
+                        return True
             else:
                 return False
 
@@ -291,16 +312,21 @@ class Game:
                 else:
                     return False
             elif (new_x >= 650 and new_y < 600):
-                self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
-                print(self.expected_move)
-                if self.expected_move == dice_result:
-                    return True
+                if new_x < current_x:
+                    self.expected_move = abs(target_rect_new.centerx - target_rect_original.centerx)//80
+                    print(self.expected_move)
+                    if self.expected_move == dice_result:
+                        return True
                 else:
                     return False
                 
 
         if top_left_quadrant:
             if (new_x < 650 and new_y >= 400):
+
+                if self.current_color == "black":      # Ograniczenie przejście po drugiemu kołu dla czarnych pionków
+                    return False
+                
                 if(target_rect_original.centerx - target_top_left.centerx)//80 != 0:
                     num_end = abs(target_rect_original.centerx - target_top_left.centerx + 50)//80     # Obliczanie liczby pól, o które przesunięto pionek w swoim kwadracie
                     print(target_top_left.centerx, target_rect_original.centerx, num_end)
@@ -315,10 +341,11 @@ class Game:
                 else:
                     return False     
             elif (new_x < 650 and new_y < 200):
-                self.expected_move = abs(target_rect_original.centerx - target_rect_new.centerx)//80
-                print(self.expected_move)
-                if self.expected_move == dice_result:
-                    return True
+                if new_x < current_x:
+                    self.expected_move = abs(target_rect_original.centerx - target_rect_new.centerx)//80
+                    print(self.expected_move)
+                    if self.expected_move == dice_result:
+                        return True
             else:
                 return False
 

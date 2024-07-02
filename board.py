@@ -81,3 +81,22 @@ class Board:
                 if pionek.rect.colliderect(target_rect):
                     return True
         return False  
+    
+
+    def end_on_position(self, x, y, pionki_wyprowadzone):   # Zwraca pionek, który jest ostatni na danej pozycji
+        target_rect = pygame.Rect(x, y, 75, 75)
+        last_checker = None
+
+        for checker in pionki_wyprowadzone:
+            if checker.rect.colliderect(target_rect):
+                if last_checker is None:
+                    last_checker = checker
+                else:
+                    if ((any(target_rect.colliderect(rect) for rect in self.top_left + self.top_right) and checker.rect.centery > last_checker.rect.centery)
+                        or (any(target_rect.colliderect(rect) for rect in self.down_left + self.down_right) and checker.rect.centery < last_checker.rect.centery)):
+                        last_checker = checker
+
+        return last_checker
+
+
+        
