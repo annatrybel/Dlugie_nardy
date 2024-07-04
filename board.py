@@ -24,23 +24,39 @@ class Checker:
         for pionek in pionki2:
             window.blit(Checker.pionek2_img, pionek.rect.topleft)
 
+
+class NumberedRect(pygame.Rect):
+    def __init__(self, left, top, width, height, position_number):
+        super().__init__(left, top, width, height)
+        self.position_number = position_number
+
 class Board:
-    def __init__(self, window, offset=60):
+    def __init__(self, window, offset=35):
         self.window = window
         self.offset = offset
-        self.pionki1 = [Checker('white', 1055, offset + i * 36) for i in range(15)]
-        self.pionki2 = [Checker('black', offset, 680 - i * 36) for i in range(15)]
+        self.pionki1 = [Checker('white', 1055, self.offset + i * 36) for i in range(15)]
+        self.pionki2 = [Checker('black', 120, 700 - i * 36) for i in range(15)]
         self.pionki_wyprowadzone1 = []
         self.pionki_wyprowadzone2 = []
-        # Listy do przechowywania prostokątów
-        self.top_left = [pygame.Rect(self.offset + i * 80, 60, 75, 100) for i in range(6)]
-        self.top_right = [pygame.Rect(650 + i * 80, 60, 75, 100) for i in range(6)]
-        self.down_left = [pygame.Rect(self.offset + i * 80, 700 - self.offset, 75, 100) for i in range(6)]
-        self.down_right = [pygame.Rect(650 + i * 80, 700 - self.offset, 75, 100) for i in range(6)]
+        
+        
+         # Listy do przechowywania prostokątów z numerami pozycji
+        self.top_right = [NumberedRect(655 + i * 80, self.offset, 75, 150, 7 - 1) for i in range(6)]
+        self.top_left = [NumberedRect(120 + i * 80, self.offset, 75, 150, 13 - 1) for i in range(6)]        
+        self.down_left = [NumberedRect(120 + i * 80, 620, 75, 150, i + 13) for i in range(6)]
+        self.down_right = [NumberedRect(655 + i * 80, 620, 75, 150, i + 19) for i in range(6)]
+
+        self.box_white =pygame.Rect(1160,self.offset, 75, 400)
+        self.box_black =pygame.Rect(15,self.offset, 75, 400)
+
+        
 
     def draw(self):
         for rect in self.top_left + self.top_right + self.down_left + self.down_right:
             pygame.draw.rect(self.window, (200, 200, 200), rect, 1)
+
+        pygame.draw.rect(self.window, (200, 200, 200), self.box_white, 1)
+        pygame.draw.rect(self.window, (200, 200, 200), self.box_black, 1)
 
         Checker.draw_checkers(self.window, self.pionki1, self.pionki2)
         Checker.draw_checkers(self.window, self.pionki_wyprowadzone1, self.pionki_wyprowadzone2)
@@ -72,14 +88,10 @@ class Board:
 
     def is_opponent_checker_on_position(self, current_color, x, y):    # Sprawdza czy na pozycji jest pionek przeciwnika
         target_rect = pygame.Rect(x, y, 75, 75)
-        if current_color == "white":
-            for pionek in self.pionki_wyprowadzone2:
-                if pionek.rect.colliderect(target_rect):
-                    return True
-        else:
-            for pionek in self.pionki_wyprowadzone1:
-                if pionek.rect.colliderect(target_rect):
-                    return True
+        opponent_checkers = self.pionki_wyprowadzone2 if current_color == "white" else self.pionki_wyprowadzone1
+        for checker in opponent_checkers:
+            if checker.rect.colliderect(target_rect):
+                return True        
         return False  
     
 
