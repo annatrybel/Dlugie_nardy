@@ -1,5 +1,5 @@
 import pygame
-import sys
+import sys 
 from main_panel import Button
 from players_panel import addName
 

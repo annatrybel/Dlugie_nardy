@@ -87,13 +87,15 @@ class Board:
 
 
     def is_opponent_checker_on_position(self, current_color, x, y):    # Sprawdza czy na pozycji jest pionek przeciwnika
-        target_rect = pygame.Rect(x, y, 75, 75)
-        opponent_checkers = self.pionki_wyprowadzone2 if current_color == "white" else self.pionki_wyprowadzone1
+        target_rect = pygame.Rect(x, y, 80, 100)
+        opponent_checkers = self.pionki_wyprowadzone2 + self.pionki2 if current_color == "white" else self.pionki_wyprowadzone1 + self.pionki1
         for checker in opponent_checkers:
             if checker.rect.colliderect(target_rect):
-                return True        
-        return False  
-    
+                print(f"Kolizja wykryta: {checker}")  # Logowanie wykrytej kolizji
+                return True
+        print(f"Brak kolizji na pozycji: {x}, {y}")  # Logowanie braku kolizji
+        return False
+        
 
     def end_on_position(self, x, y, pionki_wyprowadzone):   # Zwraca pionek, który jest ostatni na danej pozycji
         target_rect = pygame.Rect(x, y, 75, 75)

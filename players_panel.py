@@ -4,6 +4,7 @@ from game_panel import *
 import pygame.font
 
 
+
 def addName():
     window = pygame.display.set_mode((1200, 800))
     textInput = TextInput(700, 150, 300, 50, max_length=10)

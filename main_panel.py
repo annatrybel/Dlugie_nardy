@@ -7,11 +7,13 @@ class Button:
         self.button_image = pygame.transform.scale(self.button_image, (width, height))
         self.hover_button_image = pygame.image.load(hover_image_path)
         self.hover_button_image = pygame.transform.scale(self.hover_button_image, (width, height))
+        self.click_sound = pygame.mixer.Sound("images/click.wav")
         
     def is_clicked(self):                                                #sprawdza czy myszka jest nad przyciskiem
         mouse_pos = pygame.mouse.get_pos()
         if self.rect.collidepoint(mouse_pos):
             if pygame.mouse.get_pressed()[0]:
+                self.click_sound.play()
                 return True
         return False
 
@@ -24,3 +26,5 @@ class Button:
         else:
             window.blit(self.button_image, self.rect.topleft)
 
+
+    
