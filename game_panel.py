@@ -42,7 +42,6 @@ class Game:
         self.rzut_button = Button(110, 800, 400, 100, "images/rzut.png", "images/rzut2.png")
         self.powrot_button = Button(720, 800, 400, 100, "images/powrot.png", "images/powrot2.png")
         self.sound_on = True  
-        self.sound_button = Button(1150, 800, 50, 50, "images/{}.png", "images/{}.png")
         
        
 
@@ -72,14 +71,7 @@ class Game:
         else:
             self.rzut_button.draw(self.window)
         self.powrot_button.draw(self.window)
-        if self.sound_on:
-            print("Sound on draw")
-            self.sound_button = Button(1150, 800, 50, 50, "images/sound.png", "images/sound.png")
-            self.sound_button.draw(self.window)
-        else:
-            print("Sound off draw")
-            self.sound_button = Button(1150, 800, 50, 50, "images/not_sound.png", "images/not_sound.png")
-            self.sound_button.draw(self.window)
+        
 
 
 
