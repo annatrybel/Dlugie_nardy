@@ -1,1 +1,1 @@
-# Dlugie_nardy
+Long backgammon is a digital version of the classic board game, implemented using Python and Pygame. This project allows players to enjoy the game with a graphical interface, complete with interactive buttons and sound effects.
