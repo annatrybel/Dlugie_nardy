@@ -42,9 +42,19 @@ class Game:
         self.rzut_button = Button(110, 800, 400, 100, "images/rzut.png", "images/rzut2.png")
         self.powrot_button = Button(720, 800, 400, 100, "images/powrot.png", "images/powrot2.png")
         self.sound_on = True  
+        self.update_sound_button_image()
         
-       
 
+    def update_sound_button_image(self):
+        pygame.draw.rect(self.window, (0, 0, 0), (1150, 820, 50, 50))
+        if self.sound_on:
+            self.sound_button = Button(1150, 820, 50, 50, "images/sound.png", "images/sound.png")           
+            pygame.mixer.set_num_channels(8)  #włączenie dźwięku
+        else:
+            self.sound_button = Button(1150, 820, 50, 50, "images/not_sound.png", "images/not_sound.png")            
+            pygame.mixer.set_num_channels(0) 
+        self.sound_button.draw(self.window)
+        
 
     def reset_game(self):
         self.board = Board(self.window)
@@ -62,6 +72,7 @@ class Game:
         self.random_dice2 = None
         self.expected_move = None
         self.double_dice = 0
+        self.sound_on = True
         
         
     
@@ -132,10 +143,10 @@ class Game:
             text_rect = text.get_rect(center=(self.window.get_width() // 2, self.window.get_height() // 2 - 20))
             self.window.blit(text, text_rect)
             pygame.display.update()
-            pygame.time.delay(2000)   
+            pygame.time.delay(2000)                  
             self.ustawianie_pierwszenstwa = False
         elif self.rzut_button.is_clicked() and not self.ustawianie_pierwszenstwa:
-            self.double_dice = 0                # dublety kostek
+            self.double_dice = 0                
             
             self.random_dice1, self.random_dice2 = self.catch_dice()
             self.display_dice_results(self.random_dice1, self.random_dice2)
@@ -158,30 +169,9 @@ class Game:
             return
         
         elif self.sound_button.is_clicked():
-            if self.sound_on:
-                print("Sound off to true")
-                self.sound_on = False
-                self.dice_roll_sound.stop()  # Stop playing the sound
-                pygame.display.update()
-            else:
-                print("Sound on to true")
-                self.sound_on = True
-                self.dice_roll_sound.play()  # Start playing the sound
-            
+            self.sound_on = not self.sound_on
+            self.update_sound_button_image()
                 
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     def handle_move(self, rect, dice_value):
         if not self.checkers_in_final_position():
@@ -347,16 +337,11 @@ class Game:
                 box_position = self.board.box_white
             else:
                 box_position = self.board.box_black
-
-        # Sprawdź warunki logiczne
             if (dice_result == original_position_index and new_pos == box_position) or self.is_move_clockwise(original_pos, new_pos, dice_result):
                 return True
 
         return False
     
-
-
-
 
     
     def start(self, name_player1, name_player2):        
@@ -443,6 +428,7 @@ class Game:
             self.window.blit(self.background, (0, 0))
             self.board.draw()
             self.draw_buttons()
+            self.update_sound_button_image()
             pygame.display.update()
 
 
@@ -452,5 +438,4 @@ if __name__ == "__main__":
     game.start()
 
     
-
 
