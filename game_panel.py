@@ -1,10 +1,9 @@
-# main.py
-import math
 import time
-from board import Checker, Board
+from board import Board
 import pygame
 import random
 from main_panel import Button
+from memory_profiler import profile
 
 
 class Game:
@@ -21,7 +20,7 @@ class Game:
         self.offset_x = 0
         self.offset_y = 0
         self.current_color = "black" 
-        self.pionek_usuniety = False  # Flaga do śledzenia, czy pionek został usunięty podczas bieżącego rzutu
+        self.pionek_usuniety = False  # czy pionek został usunięty podczas bieżącego rzutu
         self.expected_move = None
 
         self.dice_result = 0
@@ -115,16 +114,16 @@ class Game:
     def first_projection(self):
         # Sprawdzanie, czy to pierwszy rzut dla danego gracza
         if self.current_color == "white":
-            if not self.first_double_dice1_white:  # Sprawdzenie, czy to pierwszy rzut białego gracza
-                if self.random_dice1 == self.random_dice2:  # Sprawdzenie, czy wyrzucono dublet
+            if not self.first_double_dice1_white: 
+                if self.random_dice1 == self.random_dice2:  # czy wyrzucono dublet
                     self.double_roll_white = self.random_dice1
-            self.first_double_dice1_white = True  # Ustawienie flagi po pierwszym rzucie białego gracza
+            self.first_double_dice1_white = True  
 
         elif self.current_color == "black":
-            if not self.first_double_dice1_black:  # Sprawdzenie, czy to pierwszy rzut czarnego gracza
-                if self.random_dice1 == self.random_dice2:  # Sprawdzenie, czy wyrzucono dublet
+            if not self.first_double_dice1_black:  
+                if self.random_dice1 == self.random_dice2:  
                     self.double_roll_black = self.random_dice1
-            self.first_double_dice1_black = True  # Ustawienie flagi po pierwszym rzucie czarnego gracza
+            self.first_double_dice1_black = True  
 
 
     def obsługa_przycisków(self, name_player1, name_player2):
@@ -390,33 +389,37 @@ class Game:
                         self.dragging = False
                         valid_position = False
 
-                        for rect in self.board.top_left + self.board.top_right + self.board.down_left + self.board.down_right:
-                            if self.selected_pionek.rect.colliderect(rect):
-                                if not self.dice1_used:
-                                     if self.handle_move(rect, self.random_dice1):
-                                        self.dice1_used = True
-                                        if self.double_dice > 0:
-                                            self.dice1_used = False
-                                            self.double_dice -= 1
-                                        valid_position = True
-                                        break
-                                elif not self.dice2_used:
-                                    if self.handle_move(rect, self.random_dice2):
-                                        self.dice2_used = True                                        
-                                        valid_position = True
-                                        break
-                                                
+                        rects = self.board.top_left + self.board.top_right + self.board.down_left + self.board.down_right
+
+                        def attempt_move(dice, dice_used):
+                            if not dice_used:
+                                for rect in rects:
+                                    if self.selected_pionek.rect.colliderect(rect):
+                                        if self.handle_move(rect, dice):
+                                            return True
+                            return False
+
+                        if not self.dice1_used:
+                            if attempt_move(self.random_dice1, self.dice1_used):
+                                self.dice1_used = True
+                                if self.double_dice > 0:
+                                    self.dice1_used = False
+                                    self.double_dice -= 1
+                                valid_position = True
+                        if not valid_position and not self.dice2_used:
+                            if attempt_move(self.random_dice2, self.dice2_used):
+                                self.dice2_used = True
+                                valid_position = True
+
                         if not valid_position:
                             self.selected_pionek.rect.x, self.selected_pionek.rect.y = self.selected_pionek.previous_position
                         else:
                             self.selected_pionek.update_previous_position()
                             self.expected_move = None
                             self.selected_pionek = None
-                    
-                     # Po każdym ruchu sprawdź, czy oba rzuty zostały wykorzystane
-                    if self.dice1_used and self.dice2_used:     
-                        self.dice_result = 0  # Resetowanie wyniku kości, aby wskazać, że gracz zakończył ruchy
-                    
+
+                        if self.dice1_used and self.dice2_used:
+                            self.dice_result = 0  # Resetowanie wyniku kości, aby wskazać, że gracz zakończył ruchy
                                 
                 elif event.type == pygame.MOUSEMOTION:
                     if self.dragging and self.selected_pionek:
